@@ -37,7 +37,7 @@ void setup() {
     Serial.println(highest_log_num+1);
 
     char log_file_path[32];
-    sprintf(log_file_path, LOG_FILE_FULL, highest_log_num+1);
+    snprintf(log_file_path, sizeof(log_file_path), LOG_FILE_FULL, highest_log_num+1);
 
     Serial.println(log_file_path);
 
