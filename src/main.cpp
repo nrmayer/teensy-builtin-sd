@@ -1,10 +1,6 @@
 #include <Arduino.h>
-#include <SdFat.h>
+#include "sd_manager.hpp"
 
-SdFat sd;
-SdFile file;
-SdFile dir;
-SdFile dir_file;
 
 #define LOG_FILE_FORMAT "l%d.log"
 #define LOG_FILE_DIR "/logs/"
@@ -14,26 +10,15 @@ void setup() {
     Serial.begin(9600);
     while (!Serial) {}
 
-    sd.begin(SdioConfig(FIFO_SDIO));
+    BuiltinSd.start();
 
-    if (!file.open("test_file.txt", O_RDONLY)) {
-        Serial.println("open failed");
-        return;
-    }
-
-    uint8_t buf[512];
-    int read = file.read(buf, sizeof(buf));
-    buf[read] = '\0'; // null term
-
-    Serial.println((const char*)buf);
-
-    file.close();
-
-    if (!dir.open(LOG_FILE_DIR, O_RDONLY)) {
+    SdFile dir = BuiltinSd.open_file(LOG_FILE_DIR, O_RDONLY);
+    if (!dir) {
         Serial.println("log dir open failed");
         return;
     }
-    
+
+    SdFile dir_file;
     int highest_log_num = 1;
     while(dir_file.openNext(&dir, O_RDONLY)) {
         char name_buf[32];
@@ -51,13 +36,12 @@ void setup() {
     Serial.print("new dir file at index:");
     Serial.println(highest_log_num+1);
 
-    SdFile new_log_file;
     char log_file_path[32];
     sprintf(log_file_path, LOG_FILE_FULL, highest_log_num+1);
 
     Serial.println(log_file_path);
 
-    new_log_file.open(log_file_path, O_WRITE | O_APPEND | O_CREAT);
+    SdFile new_log_file = BuiltinSd.open_file(log_file_path, O_WRITE | O_APPEND | O_CREAT);
     new_log_file.write("This is a VERY important log");
     new_log_file.sync();
 }
